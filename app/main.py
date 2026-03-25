@@ -5,8 +5,14 @@ app = FastAPI()
 
 
 @app.get("/")
-def read_root():
-    return {"message": "Bonjour Anthony"}
+def read_root(request: Request):
+    client_ip = request.client.host
+    return {
+        "message": "Bonjour Anthony",
+        "ip": client_ip,
+        "api_ip_endpoint": "/api/ip",
+        "html_ip_endpoint": "/ip",
+    }
 
 
 @app.get("/api/ip")
