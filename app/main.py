@@ -4,15 +4,10 @@ from fastapi.responses import HTMLResponse
 app = FastAPI()
 
 
-@app.get("/")
+@app.get("/", response_class=HTMLResponse)
 def read_root(request: Request):
     client_ip = request.client.host
-    return {
-        "message": "Bonjour Anthony",
-        "ip": client_ip,
-        "api_ip_endpoint": "/api/ip",
-        "html_ip_endpoint": "/ip",
-    }
+    return f"<h1>Your public IP is {client_ip}</h1>"
 
 
 @app.get("/api/ip")
