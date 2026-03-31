@@ -1,0 +1,13 @@
+@baseUrl = http://127.0.0.1:8000
+
+### Root check
+GET {{baseUrl}}/
+
+### Bookable rooms JSON
+GET {{baseUrl}}/rooms
+
+### IP in JSON
+GET {{baseUrl}}/api/ip
+
+### Frontend page
+GET {{baseUrl}}/rooms-page

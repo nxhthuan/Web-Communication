@@ -22,3 +22,10 @@ Rename `.env-example` to `.env` to override the `MODE=production`set in the `Doc
 
 To run the container locally:
 `docker-compose up --build`
+
+### REST API exercise
+
+- JSON endpoint: `/rooms`
+- Swagger UI: `/docs`
+- Frontend page with `fetch()`: `/rooms-page`
+- VS Code REST Client file: `rooms.http`
