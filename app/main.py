@@ -2,7 +2,7 @@
 from typing import List
 
 from fastapi import FastAPI, Request
-from fastapi.responses import HTMLResponse
+from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 
@@ -67,9 +67,13 @@ rooms_data = [
 
 # Main route for this API
 @app.get("/")
-def read_root(): 
-    # f-string concatenation
-    return { "msg": f"Hello {my_name}"}
+def read_root():
+    return RedirectResponse(url="/rooms-page", status_code=307)
+
+
+@app.get("/api/hello")
+def api_hello():
+    return {"msg": f"Hello {my_name}"}
 
 # What is my ip 
 @app.get("/api/ip")
@@ -97,112 +101,60 @@ def rooms_page():
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
         <title>Bookable Rooms</title>
         <style>
-            :root {
-                --bg: #f6efe5;
-                --card: #fffaf4;
-                --ink: #1f2937;
-                --accent: #b45309;
-                --accent-soft: #fde6c8;
-                --border: #ead8bf;
-            }
-
             * {
                 box-sizing: border-box;
             }
 
             body {
                 margin: 0;
-                min-height: 100vh;
-                font-family: Georgia, "Times New Roman", serif;
-                background:
-                    radial-gradient(circle at top right, #ffe7bf 0, transparent 25%),
-                    linear-gradient(180deg, #fff8ef 0%, var(--bg) 100%);
-                color: var(--ink);
+                font-family: Arial, sans-serif;
+                background: #f5f5f5;
+                color: #222;
             }
 
             main {
-                max-width: 1000px;
+                max-width: 800px;
                 margin: 0 auto;
-                padding: 48px 20px 64px;
+                padding: 24px 16px 40px;
             }
 
             .hero {
-                padding: 28px;
-                border: 1px solid var(--border);
-                border-radius: 24px;
-                background: rgba(255, 250, 244, 0.92);
-                box-shadow: 0 18px 50px rgba(91, 62, 31, 0.08);
+                margin-bottom: 16px;
             }
 
             h1 {
-                margin: 0 0 12px;
-                font-size: clamp(2.2rem, 5vw, 4rem);
-                line-height: 1;
-            }
-
-            p {
-                margin: 0;
-                font-size: 1.05rem;
-                line-height: 1.7;
+                margin: 0 0 8px;
+                font-size: 32px;
             }
 
             .status {
-                margin: 18px 0 0;
-                color: var(--accent);
-                font-weight: 700;
+                margin: 0;
+                font-weight: bold;
             }
 
             .grid {
-                display: grid;
-                grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-                gap: 18px;
-                margin-top: 28px;
+                display: flex;
+                flex-direction: column;
+                gap: 12px;
             }
 
             .card {
-                padding: 20px;
-                border-radius: 20px;
-                border: 1px solid var(--border);
-                background: var(--card);
-                box-shadow: 0 14px 35px rgba(91, 62, 31, 0.08);
-            }
-
-            .room-number {
-                display: inline-block;
-                margin-bottom: 12px;
-                padding: 6px 10px;
-                border-radius: 999px;
-                background: var(--accent-soft);
-                color: var(--accent);
-                font-weight: 700;
+                background: #fff;
+                border: 1px solid #ddd;
+                border-radius: 8px;
+                padding: 16px;
             }
 
             .room-type {
-                margin: 0 0 12px;
-                font-size: 1.4rem;
+                margin: 0 0 8px;
+                font-size: 20px;
             }
 
             .meta {
                 margin: 0;
                 padding: 0;
                 list-style: none;
-                display: grid;
-                gap: 8px;
-            }
-
-            .meta strong {
-                color: #111827;
-            }
-
-            @media (max-width: 640px) {
-                main {
-                    padding-top: 28px;
-                }
-
-                .hero,
-                .card {
-                    border-radius: 18px;
-                }
+                line-height: 1.8;
             }
         </style>
     </head>
@@ -210,7 +162,7 @@ def rooms_page():
         <main>
             <section class="hero">
                 <h1>Available Rooms</h1>
-                <p>This page uses JavaScript <code>fetch()</code> to load the temporary room list from the FastAPI endpoint <code>/rooms</code>.</p>
+                <p>Simple frontend using <code>fetch()</code> from <code>/rooms</code>.</p>
                 <p class="status" id="status">Loading rooms...</p>
             </section>
             <section class="grid" id="room-list"></section>
@@ -234,8 +186,7 @@ def rooms_page():
 
                     roomListElement.innerHTML = rooms.map((room) => `
                         <article class="card">
-                            <span class="room-number">Room ${room.room_number}</span>
-                            <h2 class="room-type">${room.room_type}</h2>
+                            <h2 class="room-type">Room ${room.room_number} - ${room.room_type}</h2>
                             <ul class="meta">
                                 <li><strong>Floor:</strong> ${room.floor}</li>
                                 <li><strong>Guests:</strong> up to ${room.max_guests}</li>
