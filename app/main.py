@@ -104,7 +104,6 @@ def rooms_page():
     <body>
         <main>
             <h1>Available rooms list</h1>
-            <hr />
             <div id="room-list"></div>
         </main>
 
@@ -129,7 +128,6 @@ def rooms_page():
                         <p>Floor: ${room.floor}</p>
                         <p>Pax: up to ${room.max_guests}</p>
                         <p>Price: ${room.price_per_night} EUR</p>
-                        <hr />
                     </section>
                 `).join("");
             }
