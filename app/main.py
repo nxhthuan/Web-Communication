@@ -100,79 +100,26 @@ def rooms_page():
         <meta charset="UTF-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
         <title>Bookable Rooms</title>
-        <style>
-            * {
-                box-sizing: border-box;
-            }
-
-            body {
-                margin: 0;
-                font-family: Arial, sans-serif;
-                background: #f5f5f5;
-                color: #222;
-            }
-
-            main {
-                max-width: 800px;
-                margin: 0 auto;
-                padding: 24px 16px 40px;
-            }
-
-            .hero {
-                margin-bottom: 16px;
-            }
-
-            h1 {
-                margin: 0 0 8px;
-                font-size: 32px;
-            }
-
-            .status {
-                margin: 0;
-                font-weight: bold;
-            }
-
-            .grid {
-                display: flex;
-                flex-direction: column;
-                gap: 12px;
-            }
-
-            .card {
-                background: #fff;
-                border: 1px solid #ddd;
-                border-radius: 8px;
-                padding: 16px;
-            }
-
-            .room-type {
-                margin: 0 0 8px;
-                font-size: 20px;
-            }
-
-            .meta {
-                margin: 0;
-                padding: 0;
-                list-style: none;
-                line-height: 1.8;
-            }
-        </style>
     </head>
     <body>
         <main>
-            <section class="hero">
-                <h1>Available Rooms</h1>
-                <p>Simple frontend using <code>fetch()</code> from <code>/rooms</code>.</p>
-                <p class="status" id="status">Loading rooms...</p>
-            </section>
-            <section class="grid" id="room-list"></section>
+            <h1>Available Rooms</h1>
+            <p>This page loads data from <code>/rooms</code> using <code>fetch()</code>.</p>
+            <p id="status">Loading rooms...</p>
+            <button type="button" id="reload-button">Reload rooms</button>
+            <hr />
+            <div id="room-list"></div>
         </main>
 
         <script>
             const statusElement = document.getElementById("status");
             const roomListElement = document.getElementById("room-list");
+            const reloadButton = document.getElementById("reload-button");
 
             async function loadRooms() {
+                statusElement.textContent = "Loading rooms...";
+                roomListElement.innerHTML = "";
+
                 try {
                     const response = await fetch("/rooms");
 
@@ -184,16 +131,21 @@ def rooms_page():
 
                     statusElement.textContent = `${rooms.length} bookable room(s) found.`;
 
+                    if (rooms.length === 0) {
+                        roomListElement.innerHTML = "<p>No rooms available right now.</p>";
+                        return;
+                    }
+
                     roomListElement.innerHTML = rooms.map((room) => `
-                        <article class="card">
-                            <h2 class="room-type">Room ${room.room_number} - ${room.room_type}</h2>
-                            <ul class="meta">
-                                <li><strong>Floor:</strong> ${room.floor}</li>
-                                <li><strong>Guests:</strong> up to ${room.max_guests}</li>
-                                <li><strong>Price:</strong> ${room.price_per_night} EUR / night</li>
-                                <li><strong>Status:</strong> Bookable</li>
-                            </ul>
-                        </article>
+                        <section>
+                            <h2>Room ${room.room_number}</h2>
+                            <p>Type: ${room.room_type}</p>
+                            <p>Floor: ${room.floor}</p>
+                            <p>Guests: up to ${room.max_guests}</p>
+                            <p>Price: ${room.price_per_night} EUR / night</p>
+                            <p>Status: Bookable</p>
+                            <hr />
+                        </section>
                     `).join("");
                 } catch (error) {
                     statusElement.textContent = "Could not load rooms right now.";
@@ -201,6 +153,7 @@ def rooms_page():
                 }
             }
 
+            reloadButton.addEventListener("click", loadRooms);
             loadRooms();
         </script>
     </body>
