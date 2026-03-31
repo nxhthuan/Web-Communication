@@ -103,10 +103,8 @@ def rooms_page():
     </head>
     <body>
         <main>
-            <h1>Available Rooms</h1>
-            <p>This page loads data from <code>/rooms</code> using <code>fetch()</code>.</p>
+            <h1>Available rooms list</h1>
             <p id="status">Loading rooms...</p>
-            <button type="button" id="reload-button">Reload rooms</button>
             <hr />
             <div id="room-list"></div>
         </main>
@@ -114,46 +112,33 @@ def rooms_page():
         <script>
             const statusElement = document.getElementById("status");
             const roomListElement = document.getElementById("room-list");
-            const reloadButton = document.getElementById("reload-button");
 
             async function loadRooms() {
                 statusElement.textContent = "Loading rooms...";
                 roomListElement.innerHTML = "";
 
-                try {
-                    const response = await fetch("/rooms");
+                const response = await fetch("/rooms");
+                const rooms = await response.json();
 
-                    if (!response.ok) {
-                        throw new Error("Could not load rooms");
-                    }
+                statusElement.textContent = `${rooms.length} bookable room(s) found.`;
 
-                    const rooms = await response.json();
-
-                    statusElement.textContent = `${rooms.length} bookable room(s) found.`;
-
-                    if (rooms.length === 0) {
-                        roomListElement.innerHTML = "<p>No rooms available right now.</p>";
-                        return;
-                    }
-
-                    roomListElement.innerHTML = rooms.map((room) => `
-                        <section>
-                            <h2>Room ${room.room_number}</h2>
-                            <p>Type: ${room.room_type}</p>
-                            <p>Floor: ${room.floor}</p>
-                            <p>Guests: up to ${room.max_guests}</p>
-                            <p>Price: ${room.price_per_night} EUR / night</p>
-                            <p>Status: Bookable</p>
-                            <hr />
-                        </section>
-                    `).join("");
-                } catch (error) {
-                    statusElement.textContent = "Could not load rooms right now.";
-                    roomListElement.innerHTML = "";
+                if (rooms.length === 0) {
+                    roomListElement.innerHTML = "<p>No rooms available right now.</p>";
+                    return;
                 }
+
+                roomListElement.innerHTML = rooms.map((room) => `
+                    <section>
+                        <h2>Room ${room.room_number}</h2>
+                        <p>Type: ${room.room_type}</p>
+                        <p>Floor: ${room.floor}</p>
+                        <p>Pax: up to ${room.max_guests}</p>
+                        <p>Price: ${room.price_per_night} EUR</p>
+                        <hr />
+                    </section>
+                `).join("");
             }
 
-            reloadButton.addEventListener("click", loadRooms);
             loadRooms();
         </script>
     </body>
