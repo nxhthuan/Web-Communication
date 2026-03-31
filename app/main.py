@@ -104,23 +104,18 @@ def rooms_page():
     <body>
         <main>
             <h1>Available rooms list</h1>
-            <p id="status">Loading rooms...</p>
             <hr />
             <div id="room-list"></div>
         </main>
 
         <script>
-            const statusElement = document.getElementById("status");
             const roomListElement = document.getElementById("room-list");
 
             async function loadRooms() {
-                statusElement.textContent = "Loading rooms...";
                 roomListElement.innerHTML = "";
 
                 const response = await fetch("/rooms");
                 const rooms = await response.json();
-
-                statusElement.textContent = `${rooms.length} bookable room(s) found.`;
 
                 if (rooms.length === 0) {
                     roomListElement.innerHTML = "<p>No rooms available right now.</p>";
