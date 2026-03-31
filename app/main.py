@@ -1,28 +1,34 @@
+
 from fastapi import FastAPI, Request
 from fastapi.responses import HTMLResponse
+from fastapi.middleware.cors import CORSMiddleware
 
 app = FastAPI()
 
+origins = ["*"] # Change to the real front end origin in production
 
-def render_ip_html(client_ip: str, include_greeting: bool = False) -> str:
-    if include_greeting:
-        return f"<h1>Bonjour Anthony</h1><h2>Your public IP is {client_ip}</h2>"
-    return f"<h1>Your public IP is {client_ip}</h1>"
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
+my_name = "Fredde"
 
-@app.get("/", response_class=HTMLResponse)
-def read_root(request: Request):
-    client_ip = request.client.host
-    return render_ip_html(client_ip, include_greeting=True)
+# Main route for this API
+@app.get("/")
+def read_root(): 
+    # f-string concatenation
+    return { "msg": f"Hello {my_name}"}
 
-
+# What is my ip 
 @app.get("/api/ip")
-def get_ip(request: Request):
-    client_ip = request.client.host
-    return {"ip": client_ip}
-
+def api_ip(request: Request): 
+    # f-string concatenation
+    return { "ip": request.client.host }
 
 @app.get("/ip", response_class=HTMLResponse)
-def get_ip_html(request: Request):
-    client_ip = request.client.host
-    return render_ip_html(client_ip)
+def html_ip(request: Request):
+    return f"<h1>Your IP is {request.client.host}</h1>"
