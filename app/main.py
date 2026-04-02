@@ -5,6 +5,7 @@ from fastapi import FastAPI, Request
 from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
+from app.db import get_conn
 
 app = FastAPI()
 
@@ -68,7 +69,11 @@ rooms_data = [
 # Main route for this API
 @app.get("/")
 def read_root():
-    return RedirectResponse(url="/rooms-page", status_code=307)
+    with get_conn as conn, conn.cursor() as cur:
+        cur.execute("SELECT 'hello postgres' ")
+        result = cur.fetchone()
+
+    return { "msg": f"Hotel API!", "db_status": result }
 
 
 @app.get("/api/hello")
