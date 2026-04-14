@@ -110,11 +110,21 @@ def rooms_page():
     <head>
         <meta charset="UTF-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-        <title>Hotel Front-end</title>
+        <title>Dashboard</title>
         <style>
             body {
                 font-family: Arial, sans-serif;
                 margin: 24px;
+            }
+
+            .layout {
+                display: flex;
+                gap: 40px;
+                align-items: flex-start;
+            }
+
+            .column {
+                width: 300px;
             }
 
             label, input, select {
@@ -131,25 +141,40 @@ def rooms_page():
         <main>
             <h1>Hotel Front-end</h1>
 
-            <label for="room-select">Choose room</label>
-            <select id="room-select"></select>
+            <div class="layout">
+                <section class="column">
+                    <h2>Book a room</h2>
 
-            <label for="booking-date">Booking date</label>
-            <input type="date" id="booking-date" />
+                    <label for="room-select">Choose room</label>
+                    <select id="room-select"></select>
 
-            <label for="addinfo">Additional information</label>
-            <input type="text" id="addinfo" placeholder="Guest request" />
+                    <label for="bed-type">Bed option</label>
+                    <select id="bed-type">
+                        <option value="King bed">King bed</option>
+                        <option value="Twin room">Twin room</option>
+                    </select>
 
-            <input type="button" id="save-button" value="Save booking" />
+                    <label for="booking-date">Booking date</label>
+                    <input type="date" id="booking-date" />
 
-            <p id="message"></p>
+                    <label for="addinfo">Additional information</label>
+                    <input type="text" id="addinfo" placeholder="Guest request" />
 
-            <h2>All bookings</h2>
-            <ul id="booking-list"></ul>
+                    <input type="button" id="save-button" value="Save booking" />
+
+                    <p id="message"></p>
+                </section>
+
+                <section class="column">
+                    <h2>Existing bookings</h2>
+                    <ul id="booking-list"></ul>
+                </section>
+            </div>
         </main>
 
         <script>
             const roomSelectElement = document.getElementById("room-select");
+            const bedTypeElement = document.getElementById("bed-type");
             const bookingDateElement = document.getElementById("booking-date");
             const addinfoElement = document.getElementById("addinfo");
             const saveButtonElement = document.getElementById("save-button");
@@ -196,10 +221,15 @@ def rooms_page():
                     return;
                 }
 
+                const extraInfo = addinfoElement.value.trim();
+                const fullAddinfo = extraInfo
+                    ? bedTypeElement.value + " - " + extraInfo
+                    : bedTypeElement.value;
+
                 const body = {
                     room_id: Number(roomSelectElement.value),
                     booking_date: bookingDateElement.value,
-                    addinfo: addinfoElement.value
+                    addinfo: fullAddinfo
                 };
 
                 const response = await fetch("/bookings", {
