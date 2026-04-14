@@ -6,6 +6,12 @@ GET {{baseUrl}}/
 
 GET {{baseUrl}}/rooms
 
+### Guests
+GET {{baseUrl}}/guests
+
+### Bookings
+GET {{baseUrl}}/bookings
+
 ### IP in JSON
 GET {{baseUrl}}/api/ip
 

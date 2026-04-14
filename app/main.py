@@ -1,11 +1,19 @@
 
+from datetime import date
 from typing import List
 
 from fastapi import FastAPI, Request
-from fastapi.responses import HTMLResponse, RedirectResponse
+from fastapi.responses import HTMLResponse
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
-from app.db import get_conn
+from app.db import (
+    create_booking,
+    fetch_rooms,
+    fetch_bookings,
+    fetch_database_summary,
+    fetch_guests,
+    initialize_database,
+)
 
 app = FastAPI()
 
@@ -23,57 +31,36 @@ my_name = "Fredde"
 
 
 class Room(BaseModel):
-    room_number: str
-    room_type: str
-    floor: int
-    price_per_night: int
-    max_guests: int
-    is_bookable: bool
+    id: int
+    room_number: int
+    type: str
+    price: float
 
 
-rooms_data = [
-    {
-        "room_number": "101",
-        "room_type": "Single",
-        "floor": 1,
-        "price_per_night": 75,
-        "max_guests": 1,
-        "is_bookable": True,
-    },
-    {
-        "room_number": "203",
-        "room_type": "Double",
-        "floor": 2,
-        "price_per_night": 110,
-        "max_guests": 2,
-        "is_bookable": True,
-    },
-    {
-        "room_number": "305",
-        "room_type": "Family",
-        "floor": 3,
-        "price_per_night": 165,
-        "max_guests": 4,
-        "is_bookable": False,
-    },
-    {
-        "room_number": "402",
-        "room_type": "Suite",
-        "floor": 4,
-        "price_per_night": 220,
-        "max_guests": 3,
-        "is_bookable": True,
-    },
-]
+class BookingCreate(BaseModel):
+    room_id: int
+    booking_date: date
+    addinfo: str = ""
+
+
+@app.on_event("startup")
+def startup_event():
+    initialize_database()
 
 # Main route for this API
 @app.get("/")
 def read_root():
-    with get_conn as conn, conn.cursor() as cur:
-        cur.execute("SELECT 'hello postgres' ")
-        result = cur.fetchone()
+    summary = fetch_database_summary()
 
-    return { "msg": f"Hotel API!", "db_status": result }
+    return {
+        "msg": "Hotel API!",
+        "database": {
+            "status": "connected",
+            "room_count": summary["room_count"],
+            "guest_count": summary["guest_count"],
+            "booking_count": summary["booking_count"],
+        },
+    }
 
 
 @app.get("/api/hello")
@@ -93,7 +80,26 @@ def html_ip(request: Request):
 
 @app.get("/rooms", response_model=List[Room])
 def get_rooms():
-    return [room for room in rooms_data if room["is_bookable"]]
+    return fetch_rooms()
+
+
+@app.get("/guests")
+def get_guests():
+    return fetch_guests()
+
+
+@app.get("/bookings")
+def get_bookings():
+    return fetch_bookings()
+
+
+@app.post("/bookings")
+def post_booking(booking: BookingCreate):
+    return create_booking(
+        room_id=booking.room_id,
+        booking_date=booking.booking_date,
+        addinfo=booking.addinfo,
+    )
 
 
 @app.get("/rooms-page", response_class=HTMLResponse)
@@ -104,40 +110,120 @@ def rooms_page():
     <head>
         <meta charset="UTF-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-        <title>Bookable Rooms</title>
+        <title>Hotel Front-end</title>
+        <style>
+            body {
+                font-family: Arial, sans-serif;
+                margin: 24px;
+            }
+
+            label, input, select {
+                display: block;
+                margin-bottom: 10px;
+            }
+
+            ul {
+                padding-left: 20px;
+            }
+        </style>
     </head>
     <body>
         <main>
-            <h1>Available rooms list</h1>
-            <div id="room-list"></div>
+            <h1>Hotel Front-end</h1>
+
+            <label for="room-select">Choose room</label>
+            <select id="room-select"></select>
+
+            <label for="booking-date">Booking date</label>
+            <input type="date" id="booking-date" />
+
+            <label for="addinfo">Additional information</label>
+            <input type="text" id="addinfo" placeholder="Guest request" />
+
+            <input type="button" id="save-button" value="Save booking" />
+
+            <p id="message"></p>
+
+            <h2>All bookings</h2>
+            <ul id="booking-list"></ul>
         </main>
 
         <script>
-            const roomListElement = document.getElementById("room-list");
+            const roomSelectElement = document.getElementById("room-select");
+            const bookingDateElement = document.getElementById("booking-date");
+            const addinfoElement = document.getElementById("addinfo");
+            const saveButtonElement = document.getElementById("save-button");
+            const messageElement = document.getElementById("message");
+            const bookingListElement = document.getElementById("booking-list");
 
             async function loadRooms() {
-                roomListElement.innerHTML = "";
-
                 const response = await fetch("/rooms");
                 const rooms = await response.json();
 
                 if (rooms.length === 0) {
-                    roomListElement.innerHTML = "<p>No rooms available right now.</p>";
+                    roomSelectElement.innerHTML = "<option>No rooms</option>";
                     return;
                 }
 
-                roomListElement.innerHTML = rooms.map((room) => `
-                    <section>
-                        <h2>Room ${room.room_number}</h2>
-                        <p>Type: ${room.room_type}</p>
-                        <p>Floor: ${room.floor}</p>
-                        <p>Pax: up to ${room.max_guests}</p>
-                        <p>Price: ${room.price_per_night} EUR</p>
-                    </section>
+                roomSelectElement.innerHTML = rooms.map((room) => `
+                    <option value="${room.id}">
+                        Room ${room.room_number} - ${room.type}
+                    </option>
                 `).join("");
             }
 
+            async function loadBookings() {
+                const response = await fetch("/bookings");
+                const bookings = await response.json();
+
+                if (bookings.length === 0) {
+                    bookingListElement.innerHTML = "<li>No bookings yet.</li>";
+                    return;
+                }
+
+                bookingListElement.innerHTML = bookings.map((booking) => `
+                    <li>
+                        Room ${booking.room_number} - ${booking.datefrom}
+                    </li>
+                `).join("");
+            }
+
+            async function saveBooking() {
+                messageElement.textContent = "";
+
+                if (!bookingDateElement.value) {
+                    messageElement.textContent = "Please choose a date.";
+                    return;
+                }
+
+                const body = {
+                    room_id: Number(roomSelectElement.value),
+                    booking_date: bookingDateElement.value,
+                    addinfo: addinfoElement.value
+                };
+
+                const response = await fetch("/bookings", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify(body)
+                });
+
+                if (!response.ok) {
+                    messageElement.textContent = "Could not save booking.";
+                    return;
+                }
+
+                messageElement.textContent = "Booking saved.";
+                bookingDateElement.value = "";
+                addinfoElement.value = "";
+                await loadBookings();
+            }
+
+            saveButtonElement.addEventListener("click", saveBooking);
             loadRooms();
+            loadBookings();
         </script>
     </body>
     </html>

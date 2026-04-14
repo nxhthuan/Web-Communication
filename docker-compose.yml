@@ -23,9 +23,9 @@ services:
     ports:
       - "8080:8080"
     environment:
-      - PYTHONUNBUFFERED=1
-      - MODE
-      - DATABASE_URL
+      PYTHONUNBUFFERED: "1"
+      MODE: ${MODE:-development}
+      DATABASE_URL: ${DATABASE_URL:-postgresql://devuser:devpassword@postgres:5432/devdb}
 
 volumes:
   postgres_data:

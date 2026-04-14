@@ -25,7 +25,10 @@ To run the container locally:
 
 ### REST API exercise
 
+- Database tables are auto-created on startup: `hotel_rooms`, `hotel_guests`, `hotel_bookings`
 - JSON endpoint: `/rooms`
+- Guests endpoint: `/guests`
+- Bookings endpoint: `/bookings`
 - Swagger UI: `/docs`
 - Frontend page with `fetch()`: `/rooms-page`
 - VS Code REST Client file: `rooms.http`
