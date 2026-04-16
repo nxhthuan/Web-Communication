@@ -38,6 +38,7 @@ class Room(BaseModel):
 
 
 class BookingCreate(BaseModel):
+    guest_id: int = 1
     room_id: int
     booking_date: date
     addinfo: str = ""
@@ -96,6 +97,7 @@ def get_bookings():
 @app.post("/bookings")
 def post_booking(booking: BookingCreate):
     return create_booking(
+        guest_id=booking.guest_id,
         room_id=booking.room_id,
         booking_date=booking.booking_date,
         addinfo=booking.addinfo,
@@ -139,11 +141,14 @@ def rooms_page():
     </head>
     <body>
         <main>
-            <h1>Hotel Front-end</h1>
+            <h1>Booking dashboard</h1>
 
             <div class="layout">
                 <section class="column">
                     <h2>Book a room</h2>
+
+                    <label for="guest-select">Choose guest</label>
+                    <select id="guest-select"></select>
 
                     <label for="room-select">Choose room</label>
                     <select id="room-select"></select>
@@ -173,6 +178,7 @@ def rooms_page():
         </main>
 
         <script>
+            const guestSelectElement = document.getElementById("guest-select");
             const roomSelectElement = document.getElementById("room-select");
             const bedTypeElement = document.getElementById("bed-type");
             const bookingDateElement = document.getElementById("booking-date");
@@ -180,6 +186,32 @@ def rooms_page():
             const saveButtonElement = document.getElementById("save-button");
             const messageElement = document.getElementById("message");
             const bookingListElement = document.getElementById("booking-list");
+
+            function formatDate(dateString) {
+                const parts = dateString.split("-");
+
+                if (parts.length !== 3) {
+                    return dateString;
+                }
+
+                return parts[2] + "/" + parts[1] + "/" + parts[0];
+            }
+
+            async function loadGuests() {
+                const response = await fetch("/guests");
+                const guests = await response.json();
+
+                if (guests.length === 0) {
+                    guestSelectElement.innerHTML = "<option>No guests</option>";
+                    return;
+                }
+
+                guestSelectElement.innerHTML = guests.map((guest) => `
+                    <option value="${guest.id}">
+                        ${guest.firstname} ${guest.lastname} (${guest.previous_visits} visits)
+                    </option>
+                `).join("");
+            }
 
             async function loadRooms() {
                 const response = await fetch("/rooms");
@@ -208,7 +240,10 @@ def rooms_page():
 
                 bookingListElement.innerHTML = bookings.map((booking) => `
                     <li>
-                        Room ${booking.room_number} - ${booking.datefrom}
+                        ${booking.guest_name} - Room ${booking.room_number} -
+                        ${formatDate(booking.datefrom)} -
+                        ${booking.number_of_nights} night(s) -
+                        ${booking.total_price} EUR
                     </li>
                 `).join("");
             }
@@ -227,6 +262,7 @@ def rooms_page():
                     : bedTypeElement.value;
 
                 const body = {
+                    guest_id: Number(guestSelectElement.value),
                     room_id: Number(roomSelectElement.value),
                     booking_date: bookingDateElement.value,
                     addinfo: fullAddinfo
@@ -252,6 +288,7 @@ def rooms_page():
             }
 
             saveButtonElement.addEventListener("click", saveBooking);
+            loadGuests();
             loadRooms();
             loadBookings();
         </script>

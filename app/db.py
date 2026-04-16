@@ -1,4 +1,5 @@
 import os
+from datetime import timedelta
 
 import psycopg
 
@@ -177,7 +178,16 @@ def fetch_guests():
     with get_conn() as conn, conn.cursor() as cur:
         cur.execute(
             """
-            SELECT id, firstname, lastname, address
+            SELECT
+                hotel_guests.id,
+                hotel_guests.firstname,
+                hotel_guests.lastname,
+                hotel_guests.address,
+                (
+                    SELECT COUNT(*)
+                    FROM hotel_bookings
+                    WHERE hotel_bookings.guest_id = hotel_guests.id
+                ) AS previous_visits
             FROM hotel_guests
             ORDER BY id
             """
@@ -193,19 +203,30 @@ def fetch_bookings():
                 hotel_bookings.id,
                 hotel_bookings.guest_id,
                 hotel_bookings.room_id,
+                hotel_guests.firstname,
+                hotel_guests.lastname,
                 hotel_rooms.room_number,
                 hotel_bookings.datefrom,
                 hotel_bookings.dateto,
-                hotel_bookings.addinfo
+                hotel_bookings.addinfo,
+                (hotel_bookings.dateto - hotel_bookings.datefrom) AS number_of_nights,
+                ((hotel_bookings.dateto - hotel_bookings.datefrom) * hotel_rooms.price) AS total_price
             FROM hotel_bookings
-            JOIN hotel_rooms ON hotel_rooms.id = hotel_bookings.room_id
+            INNER JOIN hotel_guests ON hotel_guests.id = hotel_bookings.guest_id
+            INNER JOIN hotel_rooms ON hotel_rooms.id = hotel_bookings.room_id
             ORDER BY hotel_bookings.datefrom, hotel_bookings.id
             """
         )
-        return cur.fetchall()
+        bookings = cur.fetchall()
+
+        for booking in bookings:
+            booking["guest_name"] = f'{booking["firstname"]} {booking["lastname"]}'
+            booking["total_price"] = float(booking["total_price"])
+
+        return bookings
 
 
-def create_booking(room_id, booking_date, addinfo):
+def create_booking(room_id, booking_date, addinfo, guest_id=1):
     with get_conn() as conn, conn.cursor() as cur:
         cur.execute(
             """
@@ -214,10 +235,10 @@ def create_booking(room_id, booking_date, addinfo):
             RETURNING id, guest_id, room_id, datefrom, dateto, addinfo
             """,
             {
-                "guest_id": 1,
+                "guest_id": guest_id,
                 "room_id": room_id,
                 "datefrom": booking_date,
-                "dateto": booking_date,
+                "dateto": booking_date + timedelta(days=1),
                 "addinfo": addinfo,
             },
         )
