@@ -1,4 +1,4 @@
-@baseUrl = http://127.0.0.1:8000
+@baseUrl = http://127.0.0.1:8080
 
 
 GET {{baseUrl}}/
@@ -12,8 +12,25 @@ GET {{baseUrl}}/guests
 ### Bookings
 GET {{baseUrl}}/bookings
 
+### Monthly report
+GET {{baseUrl}}/monthly-report
+
+### Bookings for one guest
+GET {{baseUrl}}/bookings?guest_id=1
+
+### Save guest review
+PUT {{baseUrl}}/bookings/1
+Content-Type: application/json
+
+{
+  "stars": 5
+}
+
 ### IP in JSON
 GET {{baseUrl}}/api/ip
 
-### Frontend page
+### Employee frontend page
 GET {{baseUrl}}/rooms-page
+
+### Guest frontend page
+GET {{baseUrl}}/guest-page

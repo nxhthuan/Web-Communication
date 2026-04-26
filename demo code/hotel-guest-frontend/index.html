@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hotel</title>
+</head>
+<body>
+    <h3>Welcome dear guest!</h3>
+    
+    Rooms: <select id="room-list"></select><br>
+    Arrival: <input type="date" id="datefrom"><br>
+    Departure: <input type="date" id="dateto"><br>
+    <textarea id="info" placeholder="Additional info"></textarea><br>
+    <button type="button" id="btn-save">Save booking</button> 
+
+
+
+    <h3>Bookings:</h3>
+    <ul id="bookings-list"></ul>
+
+    <h3>Monthly report:</h3>
+    <table border="1">
+        <thead>
+            <tr>
+                <th>Month</th>
+                <th>Bookings</th>
+                <th>Nights</th>
+                <th>Revenue</th>
+            </tr>
+        </thead>
+        <tbody id="monthly-report-list"></tbody>
+    </table>
+
+    <script src="script.js"></script>
+</body>
+</html>
